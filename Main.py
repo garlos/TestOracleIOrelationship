@@ -8,35 +8,16 @@ from utils import cfg
 from utils import plot_chart
 
 # Tensorboard CallBack
-tensorCallBack = TensorBoard(log_dir='./graph',
-                             histogram_freq=1,
-                             write_graph=True,
-                             write_images=True)
-
-# EarlyStopping CallBack
-# earlyStopping = keras.callbacks.EarlyStopping(monitor='val_mean_absolute_error',
-#                                               min_delta=0,
-#                                               patience=0,
-#                                               verbose=0,
-#                                               mode='auto',
-#                                               baseline=None,
-#                                               restore_best_weights=False)
-
-# List of all CallBacks
-# kerasCallBacks = [tensorCallBack]
+# tensorCallBack = TensorBoard(log_dir='./graph',
+#                              histogram_freq=1,
+#                              write_graph=True,
+#                              write_images=True)
 
 # Get train & test data
 X_train, X_test, y_train, y_test = get_data.get_all()
 
 # Create model
-xModel = KerasRegressor(build_fn=model.get_cnn_model)
-
-# fix random seed for reproducibility
-# seed = 7
-# numpy.random.seed(seed)
-# kfold = KFold(n_splits=10, random_state=seed)
-# results = cross_val_score(xModel, X_test, y_test, cv=kfold)
-# print("Results: %.2f (%.2f) MSE" % (results.mean(), results.std()))
+xModel = KerasRegressor(build_fn=model.get_model)
 
 # Fit model
 history = xModel.fit(X_train, y_train,
@@ -45,8 +26,7 @@ history = xModel.fit(X_train, y_train,
                      verbose=cfg.get_verbose(),
                      validation_split=cfg.get_validation_split(),
                      shuffle=cfg.get_shuffle(),
-                     callbacks=[tensorCallBack
-                                ])
+                     callbacks=[])
 
 # Save model as h5 files
 # model.get_cnn_model().save('./h5/trained_model.h5')
@@ -54,7 +34,8 @@ history = xModel.fit(X_train, y_train,
 # Predict and measure RMSE
 pred = Test.check_preds(X_test, xModel)
 
-plot_chart.plot_regression(pred.flatten(), y_test, history)
+if cfg.get_network_type() == "regression":
+    plot_chart.plot_regression(pred.flatten(), y_test, history)
 
 # Print the inputs and predicted outputs values
 report_value.print_values(y_test, pred)

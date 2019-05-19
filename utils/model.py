@@ -1,47 +1,71 @@
 from keras import Sequential
-from keras.layers import Dense, Flatten, Conv2D, MaxPooling2D, Dropout
-from keras import backend as k
+from keras.layers import Dense, Dropout
 from tensorflow.python.estimator import keras
-
+from utils import get_data
+from keras.utils import np_utils
 from utils import cfg
 
 
-def get_cnn_model():
-    model = Sequential()
-    k.set_image_dim_ordering('th')
+def get_model():
+    X_train, X_test, y_train, y_test = get_data.get_all()
+    input_dim = X_train.shape[1]
 
-    model.add(Conv2D(30, (3, 3), padding='valid', input_shape=(1, 25, 25), activation='relu'))
+    y_train = np_utils.to_categorical(y_train)
+    nb_classes = y_train.shape[1]
 
-    model.add(Conv2D(30, (3, 3), padding='valid', activation='relu'))
+    if cfg.get_network_type() == "classification":
+        # Here's a Deep Dumb MLP (DDMLP)(classification)
+        model = Sequential()
+        model.add(Dense(128, input_dim=input_dim, activation='relu'))
+        model.add(Dropout(0.15))
+        model.add(Dense(64, activation='relu'))
+        model.add(Dropout(0.15))
+        model.add(Dense(32, activation='relu'))
+        model.add(Dropout(0.15))
+        model.add(Dense(16, activation='relu'))
+        model.add(Dropout(0.15))
+        model.add(Dense(8, activation='relu'))
+        model.add(Dropout(0.15))
+        model.add(Dense(nb_classes, activation=cfg.get_last_layer()))
 
-    model.add(MaxPooling2D(pool_size=(2, 2)))
+        # Model optimizer
+        keras.optimizers.rmsprop(lr=cfg.get_lr(),
+                                 beta_1=cfg.get_beta_1(),
+                                 beta_2=cfg.get_beta_2(),
+                                 epsilon=cfg.get_epsilon())
 
-    model.add(Conv2D(15, (3, 3), activation='relu'))
+        # Compile model
+        model.compile(loss=cfg.get_loss(),
+                      metrics=cfg.get_metrics(),
+                      optimizer=cfg.get_optimizer())
 
-    model.add(MaxPooling2D(pool_size=(2, 2)))
+        return model
 
-    model.add(Flatten())
+    elif cfg.get_network_type() == "regression":
+        # Here's a Deep Dumb MLP (DDMLP)(regression)
+        model = Sequential()
+        model.add(Dense(128, input_dim=input_dim, activation='relu'))
+        model.add(Dropout(0.15))
+        model.add(Dense(64, activation='relu'))
+        model.add(Dropout(0.15))
+        model.add(Dense(32, activation='relu'))
+        model.add(Dropout(0.15))
+        model.add(Dense(16, activation='relu'))
+        model.add(Dropout(0.15))
+        model.add(Dense(8, activation='relu'))
+        model.add(Dropout(0.15))
+        model.add(Dense(1, activation=cfg.get_last_layer()))
 
-    model.add(Dense(32, activation='relu'))
+        # Model optimizer
 
-    model.add(Dense(64, activation='relu'))
+        keras.optimizers.Adam(lr=cfg.get_lr(),
+                              beta_1=cfg.get_beta_1(),
+                              beta_2=cfg.get_beta_2(),
+                              epsilon=cfg.get_epsilon())
 
-    model.add(Dense(128, activation='relu'))
+        # Compile model
+        model.compile(loss=cfg.get_loss(),
+                      metrics=cfg.get_metrics(),
+                      optimizer=cfg.get_optimizer())
 
-    # model.add(BatchNormalization())
-    # model.add(Dropout(0.3))
-
-    model.add(Dense(1, activation='linear'))
-
-    # Model optimizer
-    keras.optimizers.Adam(lr=cfg.get_lr(),
-                          beta_1=cfg.get_beta_1(),
-                          beta_2=cfg.get_beta_2(),
-                          epsilon=cfg.get_epsilon())
-
-    # Compile model
-    model.compile(loss=cfg.get_loss(),
-                  metrics=cfg.get_metrics(),
-                  optimizer=cfg.get_optimizer())
-
-    return model
+        return model
